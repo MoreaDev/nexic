@@ -1,0 +1,738 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Garage Manager Pro — Demo</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
+  <style>
+    :root{--bg:#0f0f0f;--card:#1e293b;--accent:#0077b6;--muted:#90a4b2;}
+    *{box-sizing:border-box;font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto, Arial;}
+    body{margin:0;background:linear-gradient(180deg,#071123 0%, #071428 100%);color:#e6eef8;min-height:100vh;display:flex;flex-direction:column}
+    header.navbar{position:fixed;top:0;left:0;right:0;height:64px;background:var(--card);display:flex;align-items:center;justify-content:center;z-index:1000;border-bottom:2px solid rgba(0,119,182,0.15)}
+    header.navbar h1{margin:0;font-weight:700;color:var(--accent);font-size:1.25rem;flex:1;text-align:center}
+    main.container{max-width:1400px;margin:88px auto;padding:2rem;flex:1;display:flex;flex-direction:column;gap:2rem}
+    /* Login */
+    .login-root{min-height:calc(100vh - 64px);display:flex;align-items:center;justify-content:center}
+    .login-card{width:420px;background:rgba(18,27,36,0.95);padding:2rem;border-radius:12px;box-shadow:0 12px 40px rgba(2,6,23,0.6);border:1px solid rgba(255,255,255,0.04)}
+    .login-card h2{color:#90e0ef;margin:0 0 1rem}
+    .input{width:100%;padding:.85rem 1rem;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:inherit;margin-bottom:.75rem;font-size:1rem}
+    .btn-login{width:100%;padding:.85rem;border-radius:8px;background:linear-gradient(135deg,var(--accent),#90e0ef);color:#041827;border:none;font-weight:700;cursor:pointer}
+    .small{font-size:.9rem;color:var(--muted);margin-top:.6rem}
+    .error{color:#ffb4b4;background:#3b1b1b;padding:.5rem;border-radius:6px;margin-bottom:.75rem}
+    /* App */
+    .card{background:rgba(14,20,28,0.9);border-radius:12px;padding:2rem;border:1px solid rgba(255,255,255,0.04);box-shadow:0 10px 30px rgba(0,0,0,0.5);margin-bottom:1.5rem}
+    .btn{display:inline-flex;gap:.5rem;align-items:center;padding:.8rem 1.2rem;border-radius:8px;border:none;background:linear-gradient(135deg,var(--accent),#90e0ef);color:#041827;font-weight:700;cursor:pointer}
+    .btn-outline{background:transparent;border:1px solid rgba(255,255,255,0.15);color:var(--muted);padding:.6rem 1rem;border-radius:8px;cursor:pointer}
+    .list-group{list-style:none;padding:0;margin:0;border-radius:8px;overflow:auto;max-height:500px}
+    .list-group li{display:flex;justify-content:space-between;align-items:center;padding:1rem 1.2rem;border-bottom:1px solid rgba(255,255,255,0.08);cursor:default;font-size:1.05rem}
+    .list-group li span{font-weight:600}
+    table{width:100%;border-collapse:collapse;color:inherit;margin-top:1rem}
+    thead th{background:rgba(0,119,182,0.16);padding:1rem;border-bottom:1px solid rgba(255,255,255,0.08);text-align:left;font-size:1rem}
+    td, th{padding:.9rem;font-size:1rem}
+    .totals{margin-top:1rem;font-weight:700;color:#f4a261;font-size:1.1rem}
+    .back-btn{background:transparent;border:2px solid #90e0ef;color:#90e0ef;padding:.7rem 1.2rem;border-radius:8px;cursor:pointer}
+    .logout-btn{background:#ef4444;color:white;padding:.6rem 1rem;border-radius:8px;border:none;cursor:pointer}
+    textarea.invoice-box{width:100%;height:240px;margin-top:1.5rem;padding:1rem;border-radius:8px;background:rgba(255,255,255,0.05);color:#e6eef8;border:none;font-size:1rem;resize:none}
+    /* Mode Select */
+    .mode-card {
+      position: relative;
+      flex:1;
+      min-width:260px;
+      max-width:320px;
+      background:linear-gradient(180deg,rgba(255,255,255,0.03), rgba(255,255,255,0.02));
+      padding:2rem;
+      border-radius:12px;
+      cursor:pointer;
+      transition:transform 0.2s, box-shadow 0.2s;
+      text-align:center;
+      overflow:hidden;
+    }
+    .mode-card:hover {
+      transform:translateY(-6px);
+      box-shadow:0 12px 40px rgba(0,0,0,0.6);
+    }
+    .mode-card h3 { margin:0 0 .5rem; font-size:1.4rem; color:#90e0ef; }
+    .mode-card p { margin:0; color:var(--muted); font-size:1rem; }
+    /* glowing orbit effect */
+    .mode-card::before {
+      content: "";
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: conic-gradient(from 0deg, rgba(0,183,255,0.6), rgba(0,255,200,0.6), rgba(0,183,255,0.6));
+      animation: rotateGlow 3s linear infinite;
+      opacity: 0;
+      transition: opacity 0.25s;
+      pointer-events:none;
+      mix-blend-mode:screen;
+    }
+    .mode-card:hover::before { opacity: 1; }
+    .mode-card::after {
+      content: "";
+      position: absolute;
+      inset: 3px;
+      background: rgba(14,20,28,0.95);
+      border-radius: 10px;
+      z-index: 1;
+    }
+    .mode-card > * { position: relative; z-index: 2; }
+    @keyframes rotateGlow { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg);} }
+    @media(max-width:900px){main.container{padding:1rem}}
+    .low-stock {color:#ffb347;font-weight:bold}
+    .out-stock {color:#ff6b6b;font-weight:bold}
+    .small-muted{font-size:.9rem;color:var(--muted)}
+    .inline {display:inline-flex;gap:.5rem;align-items:center}
+    select.input{padding:.85rem 1rem;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:inherit;margin-bottom:.75rem;font-size:1rem}
+  
+    select.input {
+      padding:.85rem 1rem;
+      border-radius:8px;
+      border:1px solid rgba(255,255,255,0.15);
+      background:#1e293b;
+      color:#e6eef8;
+      margin-bottom:.75rem;
+      font-size:1rem;
+    }
+    select.input option {
+      background:#1e293b;
+      color:#e6eef8;
+    }
+    
+</style>
+</head>
+<body>
+  <header class="navbar">
+    <h1 id="hdrTitle">Garage Manager Pro</h1>
+    <button id="logoutGlobal" class="logout-btn" onclick="logout()" style="display:none;position:absolute;right:1rem;">Logout</button>
+  </header>
+
+  <!-- LOGIN SCREEN -->
+  <div id="loginRoot" class="login-root">
+    <div class="login-card">
+      <h2>Sign in — Garage Manager</h2>
+      <div id="loginError" class="error" style="display:none"></div>
+      <input id="loginUser" class="input" placeholder="Username" autocomplete="off" />
+      <input id="loginPass" class="input" placeholder="Password" type="password" autocomplete="off" />
+      <button id="loginBtn" class="btn-login">Sign in</button>
+      <div class="small">Demo accounts: <strong>petro / 12345</strong> and <strong>admin / admin</strong></div>
+      <div class="small-muted">Data is stored locally in your browser (per device)</div>
+    </div>
+  </div>
+
+  <!-- MAIN APP -->
+  <main id="app" class="container" style="display:none">
+
+    <!-- MODE SELECT -->
+    <section id="modeSelect" class="card" style="text-align:center">
+      <h2 style="margin-bottom:1.5rem;font-size:1.6rem">Select a Mode</h2>
+      <div style="display:flex;gap:2rem;flex-wrap:wrap;justify-content:center">
+        <div class="mode-card" onclick="openMode('cars')" title="Manage cars, parts & invoices">
+          <img src="https://img.icons8.com/ios-filled/200/ffffff/car--v1.png" style="height:120px;margin-bottom:1rem" />
+          <h3>Car Manager</h3>
+          <p>Track cars, services, and invoices</p>
+        </div>
+        <div class="mode-card" onclick="openMode('stock')" title="Manage spare parts stock">
+          <img src="https://img.icons8.com/ios-filled/200/ffffff/warehouse.png" style="height:120px;margin-bottom:1rem" />
+          <h3>Stock Manager</h3>
+          <p>Parts, suppliers, quantities</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Cars Manager -->
+    <section id="carsSection" class="card" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem">
+        <h2 style="margin:0;font-size:1.6rem">Cars</h2>
+        <div style="display:flex;gap:0.75rem;align-items:center">
+          <button class="back-btn" onclick="backToModes()"><i class="bi bi-arrow-left"></i> Modes</button>
+          <button class="logout-btn inline" onclick="logout()">Logout</button>
+        </div>
+      </div>
+
+      <form id="addCarForm" onsubmit="addCar(); return false" style="display:flex;gap:1rem;margin-bottom:1.5rem;flex-wrap:wrap">
+        <input id="carName" type="text" placeholder="Enter car (e.g., Toyota Camry - John Doe)" class="input" style="flex:1" required />
+        <button class="btn" type="submit"><i class="bi bi-plus-lg"></i> Add Car</button>
+      </form>
+
+      <ul id="carList" class="list-group"></ul>
+    </section>
+
+    <!-- Car details -->
+    <section id="carSection" class="card" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem">
+        <div>
+          <h2 id="carTitle" style="margin:0;font-size:1.6rem">Car</h2>
+          <div class="small-muted" id="carCreated"></div>
+        </div>
+        <div style="display:flex;gap:0.75rem;align-items:center">
+          <button class="back-btn" onclick="backToCars()"><i class="bi bi-arrow-left"></i> Back</button>
+          <button class="logout-btn inline" onclick="logout()">Logout</button>
+        </div>
+      </div>
+
+      <!-- Add item: allow picking from stock or manual -->
+      <form id="addItemForm" onsubmit="addItem(); return false" style="display:flex;gap:0.75rem;flex-wrap:wrap;margin-bottom:1rem;align-items:center">
+        <select id="stockSelect" class="input" style="width:300px" onchange="autoFillFromStock()">
+          <option value="">— Add from stock (optional) —</option>
+        </select>
+
+       <input id="itemName" type="text" placeholder="Service / Part (or pick from stock)" class="input" style="flex:2" />
+<input id="itemCost" type="number" step="0.01" placeholder="Original Cost" class="input" style="width:160px" />
+<input id="itemPrice" type="number" step="0.01" placeholder="Our Price" class="input" style="width:160px" />
+
+        <button class="btn" type="submit"><i class="bi bi-plus-lg"></i> Add</button>
+      </form>
+
+      <table>
+        <thead><tr><th>Item</th><th>Original ($)</th><th>Price ($)</th><th>Profit ($)</th><th>Date</th><th>Actions</th></tr></thead>
+        <tbody id="itemTable"></tbody>
+      </table>
+
+      <div id="totals" class="totals"></div>
+
+      <div style="display:flex;gap:1rem;margin-top:1rem;flex-wrap:wrap">
+        <button class="btn-outline" onclick="generateInvoice()"><i class="bi bi-file-earmark-text"></i> Generate Invoice</button>
+        <button class="btn-outline" onclick="copyInvoice()"><i class="bi bi-clipboard"></i> Copy Invoice</button>
+        <button class="btn-outline" onclick="shareInvoice()"><i class="bi bi-share"></i> Share Invoice</button>
+      </div>
+
+      <textarea id="invoiceOutput" class="invoice-box" readonly></textarea>
+    </section>
+
+    <!-- Stock Manager -->
+    <section id="stockSection" class="card" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem">
+        <h2 style="margin:0;font-size:1.6rem">Parts & Inventory</h2>
+        <div style="display:flex;gap:0.75rem;align-items:center">
+          <button class="back-btn" onclick="backToModes()"><i class="bi bi-arrow-left"></i> Modes</button>
+          <button class="logout-btn inline" onclick="logout()">Logout</button>
+        </div>
+      </div>
+
+      <form id="addStockForm" onsubmit="addStock();return false" style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1rem;align-items:center">
+        <input id="stockName" type="text" placeholder="Part Name" class="input" style="flex:2" required />
+        <input id="stockQty" type="number" min="0" placeholder="Qty" class="input" style="width:100px" required />
+        <input id="stockCost" type="number" step="0.01" placeholder="Cost" class="input" style="width:120px" required />
+        <input id="stockPrice" type="number" step="0.01" placeholder="Sell Price" class="input" style="width:120px" required />
+        <input id="stockSupplier" type="text" placeholder="Supplier" class="input" style="flex:1" />
+        <button class="btn" type="submit"><i class="bi bi-plus-lg"></i> Add Part</button>
+      </form>
+
+      <div style="display:flex;gap:1rem;align-items:center;margin-bottom:0.75rem">
+        <input id="stockSearch" type="text" class="input" placeholder="Search parts..." style="flex:1" oninput="renderStock()" />
+        <button class="btn-outline" onclick="exportStock()">Export</button>
+        <button class="btn-outline" onclick="importStock()">Import</button>
+      </div>
+
+      <table>
+        <thead><tr><th>Part</th><th>Qty</th><th>Cost</th><th>Price</th><th>Supplier</th><th>Actions</th></tr></thead>
+        <tbody id="stockTable"></tbody>
+      </table>
+    </section>
+
+  </main>
+
+<script>
+/* =========================
+   Data & Persistence
+   ========================= */
+const CREDENTIALS = { petro: '12345', admin: 'admin', nareg: 'nareg' };
+const DEMO_USERS = ['petro', 'admin']; // demo accounts to restrict
+let cars = {};      // { carName: { items: [...], createdAt } }
+let stock = {};     // { partName: { qty, cost, price, supplier } }
+let currentCar = null;
+
+function saveData(){
+  const u = localStorage.getItem('garage_user');
+  if (!u) return;
+  localStorage.setItem('cars_' + u, JSON.stringify(cars));
+  localStorage.setItem('stock_' + u, JSON.stringify(stock));
+}
+function loadData(){
+  const u = localStorage.getItem('garage_user');
+  if (!u) return;
+  cars = JSON.parse(localStorage.getItem('cars_' + u) || '{}');
+  stock = JSON.parse(localStorage.getItem('stock_' + u) || '{}');
+}
+
+/* =========================
+   Helper: demo checks & upgrade prompt
+   ========================= */
+function currentUser(){ return localStorage.getItem('garage_user') || null; }
+function isDemoUser(){
+  const u = currentUser();
+  return u && DEMO_USERS.includes(u);
+}
+function upgradePrompt(){
+  // This is shown whenever a demo user attempts a restricted action.
+  // You can replace alert with a nicer modal as desired.
+  alert('You are using a free demo account. To unlock multiple cars, more stock entries and the ability to delete items, please purchase a Premium Account.');
+}
+
+/* =========================
+   Auth / Boot
+   ========================= */
+function showError(msg){ const e = document.getElementById('loginError'); e.style.display='block'; e.innerText = msg; }
+function clearError(){ const e = document.getElementById('loginError'); e.style.display='none'; e.innerText = ''; }
+
+function login(){
+  clearError();
+  const u = document.getElementById('loginUser').value.trim();
+  const p = document.getElementById('loginPass').value;
+  if (CREDENTIALS[u] && CREDENTIALS[u] === p){
+    localStorage.setItem('garage_user', u);
+    loadData();
+    document.getElementById('loginRoot').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    document.getElementById('logoutGlobal').style.display = 'block';
+    document.getElementById('modeSelect').style.display = 'block';
+    renderCars();
+    renderStock();
+    populateStockSelect();
+  } else {
+    showError('Invalid username/password.');
+  }
+}
+
+function logout(){
+  saveData();
+  localStorage.removeItem('garage_user');
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('loginRoot').style.display = 'flex';
+  document.getElementById('logoutGlobal').style.display = 'none';
+  currentCar = null;
+}
+
+/* =========================
+   Navigation
+   ========================= */
+function openMode(mode){
+  document.getElementById('modeSelect').style.display = 'none';
+  document.getElementById('carsSection').style.display = 'none';
+  document.getElementById('carSection').style.display = 'none';
+  document.getElementById('stockSection').style.display = 'none';
+  if (mode === 'cars'){
+    document.getElementById('carsSection').style.display = 'block';
+  } else if (mode === 'stock'){
+    document.getElementById('stockSection').style.display = 'block';
+    renderStock();
+  }
+}
+function backToModes(){
+  currentCar = null;
+  document.getElementById('carSection').style.display = 'none';
+  document.getElementById('carsSection').style.display = 'none';
+  document.getElementById('stockSection').style.display = 'none';
+  document.getElementById('modeSelect').style.display = 'block';
+}
+
+/* =========================
+   Car Manager
+   ========================= */
+function addCar(){
+  const name = document.getElementById('carName').value.trim();
+  if (!name) return;
+  // DEMO restriction: only 1 car/profile allowed
+  if (isDemoUser()){
+    const existingCars = Object.keys(cars || {});
+    if (existingCars.length >= 1){
+      upgradePrompt();
+      return;
+    }
+  }
+
+  if (cars[name]) { alert('Car already exists'); return; }
+  cars[name] = { items: [], createdAt: new Date().toLocaleString() };
+  saveData();
+  renderCars();
+  document.getElementById('carName').value = '';
+}
+
+function renderCars(){
+  const ul = document.getElementById('carList');
+  ul.innerHTML = '';
+  const names = Object.keys(cars);
+  if (!names.length) { ul.innerHTML = '<li style="justify-content:center;color:var(--muted)">No cars yet</li>'; return; }
+  names.forEach(name => {
+    const li = document.createElement('li');
+    const left = document.createElement('span');
+    left.textContent = name;
+    const rightWrap = document.createElement('div');
+    rightWrap.style.display = 'flex';
+    rightWrap.style.gap = '.5rem';
+
+    const openBtn = document.createElement('button');
+    openBtn.className = 'btn-outline';
+    openBtn.innerHTML = '<i class="bi bi-box-arrow-in-right"></i> Open';
+    openBtn.addEventListener('click', () => openCar(name));
+
+    const delBtn = document.createElement('button');
+    delBtn.className = 'btn-outline';
+    delBtn.innerHTML = '<i class="bi bi-trash"></i> Delete';
+
+    // If demo user: make delete non-functional and show upgrade prompt.
+    if (isDemoUser()){
+      delBtn.addEventListener('click', () => {
+        upgradePrompt();
+      });
+    } else {
+      delBtn.addEventListener('click', () => {
+        if (!confirm(`Delete "${name}"? This removes all items inside it.`)) return;
+        delete cars[name];
+        saveData();
+        renderCars();
+        if (currentCar === name) backToCars();
+      });
+    }
+
+    rightWrap.appendChild(openBtn);
+    rightWrap.appendChild(delBtn);
+
+    li.appendChild(left);
+    li.appendChild(rightWrap);
+    ul.appendChild(li);
+  });
+}
+
+function openCar(name){
+  currentCar = name;
+  document.getElementById('carsSection').style.display = 'none';
+  document.getElementById('carSection').style.display = 'block';
+  document.getElementById('carTitle').innerText = name;
+  document.getElementById('carCreated').innerText = 'Created: ' + (cars[name].createdAt || '');
+  document.getElementById('invoiceOutput').value = '';
+  renderItems();
+  populateStockSelect(); // refresh stock dropdown
+}
+
+function backToCars(){
+  currentCar = null;
+  document.getElementById('carSection').style.display = 'none';
+  document.getElementById('carsSection').style.display = 'block';
+  document.getElementById('invoiceOutput').value = '';
+}
+
+/* Add item: if stock selected, will deduct automatically */
+function addItem(){
+  if (!currentCar) { alert('Open a car first'); return; }
+
+  // gather form values
+  const stockSelect = document.getElementById('stockSelect').value;
+  let name = document.getElementById('itemName').value.trim();
+  let cost = parseFloat(document.getElementById('itemCost').value);
+  let price = parseFloat(document.getElementById('itemPrice').value);
+
+  if (stockSelect){
+    if (!stock[stockSelect]) { alert('Not found'); return; }
+    if (stock[stockSelect].qty <= 0) { alert('Out of stock'); return; }
+    name = stock[stockSelect].name || stockSelect;
+    cost = stock[stockSelect].cost;
+    price = stock[stockSelect].price;
+    stock[stockSelect].qty--;
+    saveData(); renderStock(); populateStockSelect();
+  } else {
+    if (!name || isNaN(cost) || isNaN(price)){
+      alert('Enter valid custom fields or select stock');
+      return;
+    }
+    if (stock[name]){
+      if (stock[name].qty <= 0){ alert('Out of stock'); return; }
+      stock[name].qty--; saveData(); renderStock(); populateStockSelect();
+    }
+  }
+  const item = { name, cost, price, createdAt: new Date().toLocaleString() };
+  cars[currentCar].items.push(item);
+  saveData(); renderItems();
+
+  document.getElementById('stockSelect').value = '';
+  document.getElementById('itemName').value = '';
+  document.getElementById('itemCost').value = '';
+  document.getElementById('itemPrice').value = '';
+}
+
+function renderItems(){
+  const tbody = document.getElementById('itemTable');
+  tbody.innerHTML = '';
+  if (!currentCar) return;
+  let totalProfit = 0, totalOriginal = 0, totalPrice = 0;
+  (cars[currentCar].items || []).forEach((item, idx) => {
+    const profit = item.price - item.cost;
+    totalProfit += profit; totalOriginal += item.cost; totalPrice += item.price;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${escapeHtml(item.name)}</td>
+                    <td>${item.cost.toFixed(2)}</td>
+                    <td>${item.price.toFixed(02)}</td>
+                    <td style="font-weight:700;color:${profit>=0?'#22c55e':'#ef4444'}">${profit.toFixed(2)}</td>
+                    <td>${escapeHtml(item.createdAt)}</td>
+                    <td></td>`;
+    // actions cell with delete which WILL return item to stock if part exists
+    const actionsTd = tr.querySelector('td:last-child');
+    const delBtn = document.createElement('button');
+    delBtn.className = 'btn-outline';
+    delBtn.innerText = 'Delete';
+
+    if (isDemoUser()){
+      // Demo accounts cannot delete items inside a car — show upgrade notice instead
+      delBtn.addEventListener('click', () => {
+        upgradePrompt();
+      });
+    } else {
+      delBtn.addEventListener('click', () => {
+        // if this item corresponds to a stock part, return 1 to stock
+        if (stock[item.name] !== undefined) {
+          stock[item.name].qty = (stock[item.name].qty || 0) + 1;
+          saveData(); renderStock(); populateStockSelect();
+        }
+        cars[currentCar].items.splice(idx, 1);
+        saveData();
+        renderItems();
+      });
+    }
+
+    actionsTd.appendChild(delBtn);
+    tbody.appendChild(tr);
+  });
+  document.getElementById('totals').innerHTML =
+    `Total Original: $${totalOriginal.toFixed(2)} | Total Priced: $${totalPrice.toFixed(2)} | <span style="color:${totalProfit>=0?'#22c55e':'#ef4444'}">Profit: $${totalProfit.toFixed(2)}</span>`;
+}
+
+/* =========================
+   Invoice / Clipboard / Share
+   ========================= */
+function generateInvoice(){
+  if (!currentCar) return;
+  let invoice = `Invoice — ${currentCar}\n\nItem | Price | Date\n-------------------------------------------\n`;
+  let total = 0;
+  (cars[currentCar].items || []).forEach(it => {
+    invoice += `${it.name} | $${it.price.toFixed(2)} | ${it.createdAt}\n`;
+    total += it.price;
+  });
+  invoice += `\nTotal: $${total.toFixed(2)}`;
+  document.getElementById('invoiceOutput').value = invoice;
+}
+function copyInvoice(){
+  const txt = document.getElementById('invoiceOutput').value;
+  if (!txt) return alert('Generate invoice first');
+  navigator.clipboard.writeText(txt).then(() => alert('Invoice copied to clipboard'));
+}
+function shareInvoice(){
+  const txt = document.getElementById('invoiceOutput').value;
+  if (!txt) return alert('Generate invoice first');
+  if (navigator.share){
+    navigator.share({ title: 'Garage Invoice', text: txt }).catch(()=>alert('Share canceled'));
+  } else {
+    alert('Sharing not supported on this browser. Try Copy instead.');
+  }
+}
+
+/* =========================
+   Stock Manager
+   ========================= */
+function addStock(){
+  const name = document.getElementById('stockName').value.trim();
+  const qty = Math.max(0, parseInt(document.getElementById('stockQty').value) || 0);
+  const cost = parseFloat(document.getElementById('stockCost').value) || 0;
+  const price = parseFloat(document.getElementById('stockPrice').value) || 0;
+  const supplier = document.getElementById('stockSupplier').value.trim() || '-';
+  if (!name) return;
+
+  // DEMO restriction: only 1 stock item allowed for demo users
+  if (isDemoUser()){
+    const existingParts = Object.keys(stock || {});
+    // If adding a new part name that is not already in the stock, and there is already >=1 part
+    if (!stock[name] && existingParts.length >= 1){
+      upgradePrompt();
+      return;
+    }
+  }
+
+  // if exists, merge/update
+  stock[name] = stock[name] || { qty:0, cost:0, price:0, supplier:'-' };
+  stock[name].qty = (stock[name].qty || 0) + qty;
+  stock[name].cost = cost;
+  stock[name].price = price;
+  stock[name].supplier = supplier;
+  saveData();
+  renderStock();
+  populateStockSelect();
+  // reset inputs
+  document.getElementById('stockName').value = '';
+  document.getElementById('stockQty').value = '';
+  document.getElementById('stockCost').value = '';
+  document.getElementById('stockPrice').value = '';
+  document.getElementById('stockSupplier').value = '';
+}
+
+function renderStock(){
+  const tb = document.getElementById('stockTable');
+  const search = (document.getElementById('stockSearch').value || '').toLowerCase();
+  tb.innerHTML = '';
+  const names = Object.keys(stock);
+  if (!names.length) {
+    tb.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted)">No parts yet</td></tr>';
+    return;
+  }
+  names.forEach(name => {
+    if (search && !name.toLowerCase().includes(search) && !String(stock[name].supplier).toLowerCase().includes(search)) return;
+    const it = stock[name];
+    let cls = '';
+    if (it.qty === 0) cls = 'out-stock';
+    else if (it.qty < 3) cls = 'low-stock';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${escapeHtml(name)}</td>
+      <td class="${cls}">${it.qty}</td>
+      <td>$${it.cost.toFixed(2)}</td>
+      <td>$${it.price.toFixed(2)}</td>
+      <td>${escapeHtml(it.supplier)}</td>
+      <td></td>`;
+    const actionsTd = tr.querySelector('td:last-child');
+
+    const useBtn = document.createElement('button');
+    useBtn.className = 'btn-outline';
+    useBtn.innerText = 'Use';
+    useBtn.addEventListener('click', () => {
+      // ask for quantity to use
+      const q = parseInt(prompt(`Use how many of "${name}"?`, '1')) || 0;
+      if (q <= 0) return;
+      if ((stock[name].qty || 0) < q) return alert('Not enough stock');
+      stock[name].qty -= q;
+      saveData();
+      renderStock();
+      populateStockSelect();
+    });
+
+    const delBtn = document.createElement('button');
+    delBtn.className = 'btn-outline';
+    delBtn.innerText = 'Delete';
+
+    // Demo accounts: Delete is disabled (shows upgrade prompt). Others: do delete.
+    if (isDemoUser()){
+      delBtn.addEventListener('click', () => {
+        upgradePrompt();
+      });
+    } else {
+      delBtn.addEventListener('click', () => {
+        if (!confirm(`Delete part "${name}"? This cannot be undone.`)) return;
+        delete stock[name];
+        saveData();
+        renderStock();
+        populateStockSelect();
+      });
+    }
+
+    actionsTd.appendChild(useBtn);
+    actionsTd.appendChild(delBtn);
+    tb.appendChild(tr);
+  });
+}
+
+function deleteStock(name){ // fallback (old calls)
+  if (stock[name] && confirm('Delete '+name+'?')) { delete stock[name]; saveData(); renderStock(); populateStockSelect(); }
+}
+
+/* populate the stockSelect dropdown used in Car Manager */
+function populateStockSelect(){
+  const sel = document.getElementById('stockSelect');
+  if (!sel) return;
+  const prev = sel.value || '';
+  sel.innerHTML = '<option value="">— Add from stock (optional) —</option>';
+  Object.keys(stock).forEach(name => {
+    const opt = document.createElement('option');
+    opt.value = name;
+    opt.textContent = `${name} — (${stock[name].qty})`;
+    sel.appendChild(opt);
+  });
+  // restore previous selection if still present
+  if (prev && [...sel.options].some(o => o.value === prev)) sel.value = prev;
+}
+
+/* export/import stock (simple JSON) */
+function exportStock(){
+  const u = localStorage.getItem('garage_user') || 'guest';
+  const blob = new Blob([JSON.stringify(stock, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `stock_${u}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+function importStock(){
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'application/json';
+  input.onchange = (e) => {
+    const f = e.target.files[0];
+    if (!f) return;
+    const r = new FileReader();
+    r.onload = () => {
+      try {
+        const obj = JSON.parse(r.result);
+        // merge (add quantities if exists)
+        Object.keys(obj).forEach(k => {
+          const item = obj[k];
+          if (!stock[k]) stock[k] = item;
+          else {
+            stock[k].qty = (stock[k].qty || 0) + (item.qty || 0);
+            stock[k].cost = item.cost || stock[k].cost;
+            stock[k].price = item.price || stock[k].price;
+            stock[k].supplier = item.supplier || stock[k].supplier;
+          }
+        });
+        saveData(); renderStock(); populateStockSelect();
+        alert('Import complete');
+      } catch (err) { alert('Invalid JSON file'); }
+    };
+    r.readAsText(f);
+  };
+  input.click();
+}
+
+/* =========================
+   Utilities
+   ========================= */
+function escapeHtml(s){
+  if (typeof s !== 'string') return s;
+  return s.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]);
+}
+
+/* =========================
+   Auto boot if session exists
+   ========================= */
+document.getElementById('loginBtn').onclick = login;
+document.getElementById('loginPass').addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
+document.getElementById('loginUser').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('loginPass').focus(); });
+
+window.onload = () => {
+  const u = localStorage.getItem('garage_user');
+  if (u && CREDENTIALS[u]) {
+    loadData();
+    document.getElementById('loginRoot').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    document.getElementById('logoutGlobal').style.display = 'block';
+    document.getElementById('modeSelect').style.display = 'block';
+    renderCars();
+    renderStock();
+    populateStockSelect();
+  }
+};
+
+/* Auto-fill fields when selecting from stock */
+function autoFillFromStock(){
+  const sel = document.getElementById('stockSelect').value;
+  if (sel && stock[sel]){
+    document.getElementById('itemName').value = sel;
+    document.getElementById('itemCost').value = stock[sel].cost;
+    document.getElementById('itemPrice').value = stock[sel].price;
+  } else {
+    document.getElementById('itemName').value = '';
+    document.getElementById('itemCost').value = '';
+    document.getElementById('itemPrice').value = '';
+  }
+}
+
+</script>
+</body>
+</html>
