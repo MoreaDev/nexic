@@ -453,6 +453,9 @@ function addItem(){
   document.getElementById('itemPrice').value = '';
 }
 
+/* =========================
+   EDITABLE Items Rendering
+   ========================= */
 function renderItems(){
   const tbody = document.getElementById('itemTable');
   tbody.innerHTML = '';
@@ -464,12 +467,28 @@ function renderItems(){
     const tr = document.createElement('tr');
     tr.innerHTML = `<td>${escapeHtml(item.name)}</td>
                     <td>${item.cost.toFixed(2)}</td>
-                    <td>${item.price.toFixed(02)}</td>
+                    <td>${item.price.toFixed(2)}</td>
                     <td style="font-weight:700;color:${profit>=0?'#22c55e':'#ef4444'}">${profit.toFixed(2)}</td>
                     <td>${escapeHtml(item.createdAt)}</td>
                     <td></td>`;
-    // actions cell with delete which WILL return item to stock if part exists
+    // actions cell with edit + delete
     const actionsTd = tr.querySelector('td:last-child');
+
+    const editBtn = document.createElement('button');
+    editBtn.className = 'btn-outline';
+    editBtn.innerText = 'Edit';
+
+    if (isDemoUser()){
+      // Demo accounts cannot edit items inside a car — show upgrade notice instead
+      editBtn.addEventListener('click', () => {
+        upgradePrompt();
+      });
+    } else {
+      editBtn.addEventListener('click', () => {
+        editItem(idx);
+      });
+    }
+
     const delBtn = document.createElement('button');
     delBtn.className = 'btn-outline';
     delBtn.innerText = 'Delete';
@@ -492,11 +511,75 @@ function renderItems(){
       });
     }
 
+    actionsTd.appendChild(editBtn);
     actionsTd.appendChild(delBtn);
     tbody.appendChild(tr);
   });
   document.getElementById('totals').innerHTML =
     `Total Original: $${totalOriginal.toFixed(2)} | Total Priced: $${totalPrice.toFixed(2)} | <span style="color:${totalProfit>=0?'#22c55e':'#ef4444'}">Profit: $${totalProfit.toFixed(2)}</span>`;
+}
+
+/* Edit item with stock-aware adjustments */
+function editItem(index){
+  if (!currentCar) return;
+  const item = cars[currentCar].items[index];
+  if (!item) return;
+
+  const oldName = item.name;
+  const oldIsStock = stock[oldName] !== undefined;
+
+  // Prompt for name (allow cancel)
+  let newName = prompt("Edit item name:", item.name);
+  if (newName === null) return; // user cancelled
+  newName = newName.trim() || item.name;
+
+  // Prompt for cost (allow cancel)
+  const costStr = prompt("Edit original cost (numbers only):", item.cost);
+  if (costStr === null) return;
+  const newCost = parseFloat(costStr);
+  if (isNaN(newCost)) { alert('Invalid cost entered. Edit canceled.'); return; }
+
+  // Prompt for price (allow cancel)
+  const priceStr = prompt("Edit our price (numbers only):", item.price);
+  if (priceStr === null) return;
+  const newPrice = parseFloat(priceStr);
+  if (isNaN(newPrice)) { alert('Invalid price entered. Edit canceled.'); return; }
+
+  const newIsStock = stock[newName] !== undefined;
+
+  // If changing name to a different stock item, ensure availability
+  if (newName !== oldName && newIsStock && (stock[newName].qty || 0) <= 0){
+    alert('Not enough stock for the selected part name. Name change canceled. Cost/Price updated.');
+    // Allow updating cost/price but keep name same
+    item.cost = newCost;
+    item.price = newPrice;
+    saveData();
+    renderItems();
+    return;
+  }
+
+  // Adjust stock quantities if name changed
+  if (newName !== oldName){
+    // Return 1 to old stock if it was a stock item
+    if (oldIsStock){
+      stock[oldName].qty = (stock[oldName].qty || 0) + 1;
+    }
+    // Deduct 1 from new stock if it's a stock item
+    if (newIsStock){
+      stock[newName].qty = Math.max(0, (stock[newName].qty || 0) - 1);
+    }
+    saveData();
+    renderStock();
+    populateStockSelect();
+  }
+
+  // Apply updates
+  item.name = newName;
+  item.cost = newCost;
+  item.price = newPrice;
+
+  saveData();
+  renderItems();
 }
 
 /* =========================
